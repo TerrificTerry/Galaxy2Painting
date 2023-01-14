@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<!--
+Copyright 2018 Reiichiro Nakano All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================
+-->
+<html lang="cn">
+
+<head>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'UA-91864013-5');
+  </script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Galaxy2Painting</title>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.5.0/css/all.css"
+    integrity="sha384-B4dIYHKNBt8Bc12p+WXckhzcICo0wtJAoU8YZTY5qE0Id1GSseTk6S+L3BlXeVIU" crossorigin="anonymous">
+
+  <!-- Bootstrap core CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet">
+  <script src="dist/bundle.js"></script>
+</head>
+
+<style>
+  .centered {
+    margin: auto;
+    display: block;
+  }
+</style>
+
+<body>
+  <style>
+    @font-face {
+      font-family: 'HYWenHei';
+      src: url('fonts/HYWenHei.ttf')
+    }
+  </style>
+  <input type="file" id="file-select" style="display: none" accept="image/x-png,image/gif,image/jpeg" />
+  <div class="jumbotron jumbotron-fluid py-4" style="text-align: center; background-color: #ffffff;">
+    <h1 style="font-family: HYWenHei">Project: Galaxy2Painting</h1>
+  </div>
+  <div id="mobile-warning" hidden class="alert alert-warning" role="alert">
+    <!-- This site may have problems functioning on mobile devices.
+      Don't worry, you can still read the description below! -->
+    注意：本项目尚未适配移动设备
+  </div>
+  <ul class="nav nav-tabs nav-fill" id="myTab" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" id="stylize-tab" data-toggle="tab" href="#stylize" role="tab" aria-controls="stylize"
+        aria-selected="true">生成图片</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" id="faq-tab" data-toggle="tab" href="#faq" role="tab" aria-controls="faq"
+        aria-selected="false">帮助</a>
+    </li>
+  </ul>
+  <div class="tab-content" id="myTabContent">
+    <div class="tab-pane fade show active" id="stylize" role="tabpanel" aria-labelledby="stylize-tab">
+      <div class="container">
+        <div class="row my-4">
+          <div class="col mx-5 my-4">
+            <img id="content-img" class="centered" src="images/example.jpg" height=256></img>
+            <br>
+            <label for="content-img-size">源图片大小</label>
+            <i class="far fa-question-circle" data-toggle="tooltip" data-placement="top"
+              title="更大的源图片会提升输出图片的细节，同时显著增加运算时间"></i>
+            <input type="range" min="256" max="400" value="256" class="custom-range centered" id="content-img-size">
+            <br>
+            <select id="content-select" class="centered custom-select">
+              <option value="example" selected="selected">黑洞</option>
+              <option value="m87">M87 星云</option>
+              <option value="supernova">超新星</option>
+              <option value="file">自定义</option>
+            </select>
+          </div>
+          <div class="col mx-5 my-4">
+            <img id="style-img" class="centered" crossorigin="anonymous" src="images/sketch.jpg" height=256></img>
+            <br>
+            <label for="style-img-size">风格图片大小</label>
+            <i class="far fa-question-circle" data-toggle="tooltip" data-placement="top"
+              title='修改风格图片的大小会影响神经网络学习到的风格向量'></i>
+            <input id="style-img-square" type="checkbox" style="vertical-align: middle; float: right;"
+              data-toggle="tooltip" data-placement="top" hidden=True>
+            <input type="range" min="100" max="400" value="256" class="custom-range centered" id="style-img-size">
+            <br>
+            <select id="style-select" class="centered custom-select">
+              <option value="sketch" selected="selected">素描</option>
+              <option value="surrealism">超现实主义</option>
+              <option value="crayon_drawing">蜡笔画</option>
+              <option value="black_and_white">黑白</option>
+              <option value="oil_painting">油画</option>
+              <option value="shui_mo">水墨画</option>
+              <option value="random">从 wikiart.org 随机选择一个风格</option>
+              <option value="file">自定义</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row my-4">
+          <div class="col-md-6 offset-md-3">
+            <canvas id="stylized" class="centered"></canvas>
+            <br>
+            <label for="stylized-img-ratio">渲染强度</label>
+            <input type="range" min="0" max="100" value="100" class="custom-range centered" id="stylized-img-ratio">
+          </div>
+        </div>
+        <div class="row my-4">
+          <div class="col-md-5 offset-md-3">
+            <button disabled id="style-button" type="button" class="btn btn-primary btn-block">正在加载模型</button>
+          </div>
+          <div class="col-md-1">
+            <button type="button" id="randomize" class="btn btn-light btn-block">
+              <i class="fas fa-random" data-toggle="tooltip" data-placement="top" title="Randomize parameters"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--  -->
+
+    <div class="tab-pane fade" id="faq" role="tabpanel" aria-labelledby="faq-tab">
+      <div class="container-fluid pt-5">
+        <h5>
+          无法上传图片/网页显示不正常？
+          <!-- The model fails to load/the website does not display properly? -->
+        </h5>
+        <p>
+          尝试使用基于 chromium 的浏览器，例如 Chrome 或 Edge(Safari 浏览器基于 Webkit)
+          <!-- Try to use chromium-based browsers such as Chrome and Edge(Safari is based on Webkit). -->
+        </p>
+        <h5>
+          <!-- The model fails to load? -->
+          模型加载失败?
+        </h5>
+        <p>
+          本网站部署于东京的服务器，如果您从中国大陆访问本网站，网络连接可能会较慢。
+          <!-- This website is deployed on a server in Tokyo. If you are visiting this website from China Mainland, your connection to the server may be slow.  -->
+        </p>
+        <h5>
+          Galaxy2Painting 是什么？
+        </h5>
+        <p>
+          本项目改编自<a href="https://github.com/reiinakano/arbitrary-image-stylization-tfjs/blob/master/index.html">
+            arbitrary-image-stylization-tfjs</a>，利用人工智能技术将图片（主要为天文相关）转换成不同风格。
+        </p>
+        <p>
+          一般的滤镜或神经网络只能进行一种风格迁移。但是 Galaxy2Painting 能够进行任意多种风格迁移。
+          <!-- Conventional style transfer solutions usually normally limited to a pre-selected handful of styles. In this
+            project, two neural networks are used to provide infinitely many styles. -->
+        </p>
+        <p>
+          具体地, 一个 <i>风格学习网络</i> 先将 <b>任意</b> 被选定的风格图片进行处理并生成一个用来代表这个图片中蕴含的风格特征的 100
+          维的向量。例如，如果是被选定的风格图片是一副素描，那么风格向量就会记录下铅笔的质感。随后，该风格向量会被载入到
+          <i>风格迁移网络</i>中,并对之后输入的图片中原有的特征替换成风格向量所记录的风格。
+        </p>
+        <h5>
+          我所上传的图片会被保存吗？
+          <!-- Is my data safe? Can you see my pictures? -->
+        </h5>
+        <p>
+          不会。该项目的所有关于图像的运算仅在<b>本地</b>进行。
+        </p>
+        <h5>
+          <!-- How big are the models downloaded? -->
+          运行这个模型会占用我很多电脑空间吗？
+        </h5>
+        <p>
+          完全不会。这个优化过的神经网络模型只有 12MB 大小，且仅需要下载一次。
+        </p>
+        <h5>
+          <!-- The image produced seems blurred/ugly/unsatisfactory? -->
+          生成的图片看起来模糊不清？不好看？不尽人意？
+        </h5>
+        <p>
+          尝试一下调整图片的大小以及渲染的强度，或使用“随机化”按钮！
+
+          <!-- Try again with different style image size and stylization strength. You can also use the "randomize
+            parameters"
+            button! -->
+        </p>
+      </div>
+    </div>
+    <div id="model-select-style" value="mobilenet"></div>
+    <div id="model-select-transformer" value="selected"></div>
+
+    <script>
+      function changeLang() {
+        window.location.href = "index.html"
+      }
+    </script>
+    <div align="center">
+      <button type="button" class="btn btn-secondary" onclick="changeLang()"
+        style="text-align:center;"><b>CN</b>/EN</button>
+    </div>
+    <!-- JQuery -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+    <!-- Bootstrap tooltips -->
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+    <!-- Bootstrap core JavaScript -->
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript">
+      $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+      })
+    </script>
+
+</body>
+
+</html>
