@@ -257,7 +257,7 @@ class Main {
     this.styleButton.disabled = false;
     this.modelSelectStyle.disabled = false;
     this.modelSelectTransformer.disabled = false;
-    this.styleButton.textContent = '0%';
+    this.styleButton.textContent = 'Click me to stylize!';
   }
 
   disableStylizeButtons() {
